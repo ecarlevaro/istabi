@@ -1,4 +1,4 @@
-# iStabi
+# iStabi - Identification by stability restrictions
 Estimation of time-series models using stability restrictions. Estimation proceeds in a generalised method of moments framework using an inferential procedure that searches for candidate values of the parameters of interest.
 
 The user provides the moment(s) of interest and properties of the parameter space. This package carries out a grid search over the parameter space and returns a set of admissible values for the parameters.
