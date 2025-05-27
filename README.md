@@ -6,3 +6,5 @@ The user provides the moment(s) of interest and properties of the parameter spac
 It is an R implementation of methods described in [Magnusson, L. M., \& Mavroeidis, S. (2014). Identification using stability restrictions. Econometrica, 82(5), 1799-1851](http://dx.doi.org/10.3982/ECTA9612).
 
 Current implementation relies on a 2-step GMM instrumental variable estimator.
+
+With [Caleb Hudson](https://github.com/Banana0ohNaNa) .
