@@ -7,4 +7,4 @@ It is an R implementation of methods described in [Magnusson, L. M., \& Mavroeid
 
 Current implementation relies on a 2-step GMM instrumental variable estimator.
 
-With [Caleb Hudson](https://github.com/Banana0ohNaNa) .
+With [Caleb Hudson](https://github.com/CalebZHudson).
