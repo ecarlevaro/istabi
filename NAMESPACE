@@ -1,0 +1,3 @@
+exportPattern("^[[:alpha:]]+")
+
+import(purrr, tibble, data.table, sandwich, future, future.apply, logr, parallel, dplyr,here, DT, stringr)

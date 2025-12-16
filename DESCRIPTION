@@ -1,0 +1,30 @@
+Type: Package
+Package: iStabi
+Title: Identification by stability restrictions
+Version: 0.1.0
+Author: Caleb Hudson and Emiliano Carlevaro
+Maintainer: The package maintainer <yourself@somewhere.net>
+Description: This package allows for the production of a grid
+License: What license is it under?
+Imports: 
+    data.table,
+    dplyr,
+    future,
+    future.apply,
+    logr,
+    parallel,
+    purrr,
+    sandwich,
+    tibble,
+    here,
+    DT,
+    stringr
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Depends: 
+    R (>= 3.5)

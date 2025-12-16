@@ -1,0 +1,211 @@
+---
+title: "Plotting"
+author: "Emi Carlevaro"
+date: today
+date-meta: 15/12/2025
+editor: 
+  mode: source
+format: 
+  html:
+    code-fold: true
+    code-tools: true
+    self-contained: true
+    page-layout: full
+    toc: true
+params:
+  OUTFOLDER: "/"
+  NCORES: 8
+bibliography: [book.bib, packages.bib]
+biblio-style: apalike
+---
+
+```{r}
+library(dplyr)
+library(magrittr)
+library(iStabi)
+library(plotly)
+
+```
+
+```{r}
+Results <- readRDS('Results.rds')
+Explored <- Results$Explored
+```
+
+
+## PLOTTING
+
+THe S-test follows a Chi-Square distribution with **`r KZMKX`** degrees of freedom
+(# of instruments =`r NCOL(Z)` - # of included instruments =`r NCOL(X)`
+
+### Critical values
+Critical values for $qLL-\tilde{S}$ for `r KZ` instruments ($k = `r KZ`$), from table VII Suplementary material, p3 Magnusson Mavroeidis (2014).
+
+
+THe S-test follows a Chi-Square distribution with **`r NCOL(Z)-NCOL(X)`** degrees of freedom (# of instruments = ` `r NCOL(Z)` ` - \# of included instruments = ` `r NCOL(X)` `
+
+`Explored` has `r NROW(Explored)` rows.
+
+Critical values for $qLL-\tilde{S}$ for **`r KZ`** instruments ($k = `r KZ`$), from table VII Suplementary material, p3 Magnusson Mavroeidis (2014).
+
+The number of *fixed* identified parameters is **`r NFIXPARAMS`**.
+
+The number of *estimated* parameters under the null is **`r NSIPARAMS`**.
+
+
+```{r}
+# (C)ritical (V)alues//test//# of instruments
+# CVs$qLLStab$2
+CVs <- list('qLLStab' = list(
+                tibble('sig' = c(0.1, 0.05, 0.01, 0),
+                      'value' = c(0, 7.17, 8.36, 11.10)),
+                tibble('sig' = c(0.1, 0.05, 0.01, 0),
+                      'value' = c(0, 12.79, 14.30, 17.58)),
+                # the value is the floor: an statistic between 0 and 17.58 will have a sig of 0.1, and between 17.58 and +\infty will have 0
+                tibble('sig' = c(0.1, 0.05, 0.01, 0),
+                    'value' = c(0, 18.14, 19.95, 23.51)) ))
+# Select appropiate critical values¯
+CV <- CVs$qLLStab[[KZ]]
+```
+
+### Data for plotting
+
+```{r}
+Sdf =  2
+pExplored <- filter(Explored, !if_all(.fns=is.na)) %>%
+  # findInterval: the second vector gives the FLOOR value for each interval
+  mutate(., 
+         'qLLStab_sigAt' = CV$sig[ findInterval(qLLStab, CV$value,left.open=TRUE) ],
+         'S_pval' = round(1-pchisq(S, df=Sdf), digits=2),
+         'pointSize' = 0, 
+         'inQllSet' = if_else(qLLStab_sigAt>=0.10, 1, 0))
+# This should be TRUE (the qll value is for 3 instruments)
+NROW(filter(pExplored, qLLStab<=23.51)) == NROW(filter(pExplored, qLLStab_sigAt>=0.01))
+
+saveRDS(pExplored, 'pExplored.rds')
+
+```
+
+### Grid for plotting
+Force the starting values to be a multiple of the step size. This avoids problems and is clear what the true parameter space is.
+
+### Plots
+True parameter vector $ \color{blue}{\theta} = `r thetaStar` $
+
+#### Global search
+Scatterplot for all searched values (useful for the global search)
+
+##### S plot
+```{r}
+# INTERACTIVE PLOTs ----
+#### S-plot ----
+pSbase <- plot_ly(data = filter(pExplored, S<4.60517), 
+                 x=~gammaF, 
+                 y=~lambda,
+                 color=) %>%
+  layout(title = 'S-set for the New Keyneasian Phillips Curve (90% confidence)',
+         xaxis = list(title=plotly::TeX('\\gamma_F'), 
+                        tickvals=seq(from=0, to=1, by=0.10),
+                        range = c(0, 1),
+                        fixedrange = TRUE),
+           yaxis = list(title=plotly::TeX('\\lambda'),  
+                        tickvals=seq(from=0.001, to=0.2, by=0.05),
+                        range = c(0.001, 0.2),
+                        fixedrange = TRUE)) %>%
+  add_trace(x = 0.591,y = 0.015,
+    type = "scatter",   mode = "markers",
+    marker = list(symbol = "square",  size = 12,  color = "red" ),
+    inherit = FALSE,
+    showlegend = FALSE) %>%
+  config(mathjax = "cdn")
+
+pSbase %>%
+  add_trace(type='scatter', mode='markers', marker = list(color='blue'))
+
+```
+
+##### qLL-Stab plot
+```{r}
+# INTERACTIVE PLOTs ----
+#### S-plot ----
+pSbase <- plot_ly(data = filter(pExplored, qLLStab <= 18.14), 
+                 x=~gammaF, 
+                 y=~lambda,
+                 color=) %>%
+  layout(title = 'S-set for the New Keyneasian Phillips Curve (90% confidence)',
+         xaxis = list(title=plotly::TeX('\\gamma_F'), 
+                        tickvals=seq(from=0, to=1, by=0.10),
+                        range = c(0, 1),
+                        fixedrange = TRUE),
+           yaxis = list(title=plotly::TeX('\\lambda'),  
+                        tickvals=seq(from=0.001, to=0.2, by=0.05),
+                        range = c(0.001, 0.2),
+                        fixedrange = TRUE)) %>%
+  config(mathjax = "cdn")
+
+pSbase %>%
+  add_trace(type='scatter', mode='markers')
+
+```
+
+```{r}
+#### qLLStab plot ----
+pQllExplored <- filter(pExplored, qLLStab_sigAt >= 0.1) %>%
+  # Finding edges of the plot
+  group_by(., gammaF) %>% 
+  mutate('edge_min' = if_else(lambda == min(lambda), TRUE, FALSE),
+         'edge_max' = if_else(lambda == max(lambda), TRUE, FALSE)) %>%
+  ungroup()
+
+pQllbase <- plot_ly(data = pQllExplored, 
+                  x=~gammaF, y=~lambda, color=~qLLStab) %>%
+  layout(title = 'qLL-S set for New Keyneasian Phillips Curve (90% confidence)',
+         scene=list(
+           xaxis = list(title=plotly::TeX('\\gamma_f'), 
+                        tickvals=seq(from=PARAMS_CFG$minVal[1], to=PARAMS_CFG$maxVal[1],
+                                     by=PARAMS_CFG$stepSize[1])),
+           yaxis = list(title=plotly::TeX('\\lambda'),  
+                        tickvals=seq(from=PARAMS_CFG$minVal[2],           to=PARAMS_CFG$maxVal[2], 
+                                     by=PARAMS_CFG$stepSize[2])))) %>%
+  config(mathjax = "cdn")
+
+pQllbase %>%
+  add_trace(type='scatter', mode='markers')
+
+```
+
+```{r}
+
+pBase <- ggplot(data=pQllExplored, mapping=aes(x=gammaF, y=lambda)) +
+  scale_x_continuous(name=TeX(r"(Respose to expected inflation ($\gamma_f$))"), limits=c(-0.1, 1.1), 
+                     breaks=seq(from=-0.1, to=1.1, by=PARAMS_CFG$stepSize[1]), expand = expand_scale(mult=0.01)) +
+  scale_y_continuous(name=TeX(r'(Respose to interest rate ($\lambda$))'), limits=c(-0.3, 0.3), 
+                     breaks=seq(from=-0.3, to=0.3, by=4*(PARAMS_CFG$stepSize[2])), expand = expand_scale(mult=0.01)) + 
+  theme_bw() + theme(panel.grid=element_line(colour='#999999', linetype='14'), 
+                     panel.grid.minor=element_line(colour='white'), 
+                     text=element_text(size=10), 
+                     axis.title.x = element_text(colour='red'),
+                     axis.title.y = element_text(colour='blue', size=rel(0.9), hjust=0.9),
+                     axis.text.x = element_text(size=rel(1.25), angle=90, vjust=0.5), 
+                     axis.text.y = element_text(size=rel(1.25))) +
+  geom_vline(xintercept=0, colour = 'black', linetype = 'solid') +
+  geom_hline(yintercept=0, colour = 'black', linetype = 'solid') +   
+  # Highlightinh the TRUE value
+  geom_point(aes(x=thetaStar['gammaF'], y=thetaStar['lambda']), size=3, colour='black', fill='yellow')
+
+# Scatterplot
+pBase + geom_point(aes(colour=qLLStab))
+# Curvy set
+pBase +
+  coord_cartesian(xlim=c(-0.1, 1.1), ylim=c(-0.3, 0.3), expand=TRUE) + 
+  geom_raster(fill='grey', colour='black',
+            interpolate=TRUE, show.legend=TRUE, alpha=0.8) + 
+  # Lower edge
+  geom_path(data=filter(pQllExplored, edge_min == TRUE))  +
+  # Upper edge
+  geom_path(data=filter(pQllExplored, edge_max == TRUE))
+# RA
+
+
+```
+
