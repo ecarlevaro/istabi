@@ -4,16 +4,16 @@
 \alias{generate_global}
 \title{Generation of Global Objects}
 \usage{
-generate_global(PARAMS_CFG, Z, X, SPVALUE)
+generate_global(PARAMS_CFG, SPVALUE, ...)
 }
 \arguments{
 \item{PARAMS_CFG, }{a tibble with information about each parameter space}
 
-\item{Z, }{the set of instrument variables}
-
-\item{X, }{the set endogenous variables}
-
 \item{SPVALUE, }{the critical value of the test statistics}
+
+\item{Z, }{the set of instrument variables (optional, only required for the IV estimator)}
+
+\item{X, }{the set of exogenous variables (optional)}
 }
 \value{
 global objects

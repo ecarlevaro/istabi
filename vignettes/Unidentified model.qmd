@@ -1,0 +1,205 @@
+---
+title: "Unidentified case"
+author: "Emi Carlevaro"
+date: today
+date-meta: 14/01/2026
+editor: 
+  mode: source
+format: 
+  html:
+    code-fold: true
+    code-tools: true
+    self-contained: true
+    page-layout: full
+    toc: true
+params:
+  IDSAMPLE: ""
+  NCORES: 4
+  LOCALSEARCH: 'true'
+---
+
+## INIT
+
+```{r, eval=FALSE}
+#required packages to make a package
+pacman::p_load(devtools, roxygen2, testthat)
+#dependecies
+#pacman::p_load(tidyverse, data.table, DT, plotly, gridExtra, latex2exp, here, logr, future.apply, furrr)
+#pacman::p_load(dplyr,parallel,sandwich,here,future,logr,profvis,lobstr,parallel)
+#https://ourcodingclub.github.io/tutorials/writing-r-package/
+#create_package
+#https://combine-australia.github.io/r-pkg-dev/functions.html
+#load_all()
+#run these two lines and then library(GridMaker) in normal rstudio to install package
+# load_all loads a package. It roughly simulates what happens when a package is installed and loaded with library().
+devtools::load_all()
+
+devtools::install()
+```
+
+```{r}
+library(vars)
+library(tidyverse)
+library(iStabi)
+```
+
+
+```{r}
+sam <- iStabi::data_sim_biVAR
+```
+
+
+## THE MODEL
+
+True parameters are
+
+$$ 
+\begin{align}
+y_{1,t} &= \textcolor{blue}{\beta} \,\, y_{2,t} + 0.5 y_{1, t-1} + 0.2 y_{2, t-1} + w_{1, t} \\
+y_{2,t} &= \textcolor{blue}{\alpha} \,\, y_{1,t} + 0.1 y_{1, t-1} + 0.4 y_{2, t-1} + w_{2, t} 
+\end{align}
+$$
+
+$$ 
+\begin{bmatrix}1 & -0.15 \\ 0.75 & 1\end{bmatrix} y_t = \begin{bmatrix}0.5 & 0.2 \\ 0.1 & 0.4\end{bmatrix} y_{t-1} +  w_t
+$$
+
+with $\beta = 0.15$ and $\alpha = -0.75$.
+
+## ESTIMATION VAR
+
+```{r}
+varModel <- VAR(cbind('i' = sam$y1, 's' = sam$y2), p = 1, type = "const")
+Res = residuals(varModel)
+
+```
+
+```{r}
+# Use for computing the moment function
+Omega <- cbind('ii' = Res[, 'i']*Res[, 'i'], 'is' = Res[, 'i']*Res[, 's'],
+               'ss' = Res[, 's']*Res[, 's'])
+
+Y <- cbind( 'omega_ii' = Omega[, 'ii'], 'omega_ss' = Omega[,'ss'], 'omega_is' = Omega[,'is'] )
+
+# Compute the moment function at each t. 
+# INPUT: a named vector with values for the structural parameters
+# OUTPUT: a TxG matrix where each row corresponds to the value of the moment function on that obseration (date)
+# an each column the value fot ehfat moment equation
+GET_MOM_VALUES <- function(t0, ...) {
+  list2env(as.list(t0),envir = environment())
+  
+  #Y <- cbind( 'omega_ii' = Res[,'i']^2, 'omega_ss' = Res[,'s']^2, 'omega_is' = Res[,'i'] * Res[,'s'] )
+  
+  #Y %*% c(-theta0['alpha'],
+  #        -theta0['beta'],
+  #        1 + theta0['alpha'] * theta0['beta'])
+  
+  #fT 
+  as.matrix(-alpha*Omega[, 'ii'] - beta*Omega[, 'ss'] + (1+alpha*beta) * (Omega[, 'is']))
+  # fT - lambda
+  
+  #matrix(fT - mean(fT),
+  #       ncol = 1) # (T-varLeng) X 1
+  
+} 
+```
+
+
+
+```{r, eval=FALSE}
+GET_B <- function(theta0) {
+  c(-theta0['alpha'],
+    -theta0['beta'],
+    1 + theta0['alpha'] * theta0['beta'])
+}
+
+
+```
+
+## SEARCH
+
+### Search settings
+
+```{r}
+#### Search settings ----
+NCORES = params$NCORES
+STEPSPERCORE = 200
+# Size of adjacent cells to explores is NCORES * STEPSPERCORE
+
+# PARAMS_CFG a tibble where each row defines properties of the parameters in the name column
+# stepSize: size of the step for each parameter. You can have different sizes (and precision) for each paramter.
+# minVal and maxVal: Limits of the parameter space for each parameters. A list where each element defines the minimum and maximum for each parameter
+# ORDER: the order of the parameter has to match the order in theta (as used by the get_b() fcn)
+PARAMS_CFG <- tribble(~name,   ~iniVal, ~stepSize, ~minVal, ~maxVal,
+                      'alpha',   0.3,    0.1,        -1,      1,
+                       'beta',  -0.2,    0.1,        -1,       1) %>%
+  mutate('N_TICKS' = ((maxVal-minVal)/stepSize)+1)
+
+```
+
+```{r}
+NEQS = 1
+MODELEQS <- list(list('Y' = Y,  'get_b'=NULL))
+                 #'X'=X, 'Z'=Z))
+NCORES = 4
+# Level of condfidence of the S set. The closer to 1, the more robust the search is to local minima but it takes longer.
+SPVALUE = 0.95
+# R is NEQS*ncol(Z) where ncol(Z) is the number of instruments
+# By default this matrix has to be automatically built depending on the dimensions of MODELEQS.
+# The user can alternatively provide this matrix
+R = 1
+if (exists('Z', mode='numeric')) {
+  R <-  rbind(
+        cbind(matrix(1, nrow=ncol(Z), ncol=ncol(Z)))
+  )
+}
+
+theta0 = PARAMS_CFG$iniVal
+names(theta0) = PARAMS_CFG$name
+head(GET_MOM_VALUES(theta0))
+
+```
+
+```{r}
+verify_global(PARAMS_CFG, Y)
+Times = NROW(Res) # time periods
+
+generate_global(PARAMS_CFG,  SPVALUE)
+```
+
+
+
+### Global search grid
+
+```{r}
+gridLines <- build_lines(PARAMS_CFG, 'iniVal')
+
+# paramsCfg <- PARAMS_CFG
+# thisGridLines <- thisGridLines
+# NEQS = 1
+# psUnderNull = 1
+Grid <- build_grid(PARAMS_CFG, gridLines)
+```
+
+Test
+```{r}
+theta0 = c('alpha' = -0.75, 'beta' = 0.15) # the true theta with the estimated (nuisance) parameter 0.378
+comp_tests(theta0, VffLags = NULL)
+```
+
+### Start search
+
+```{r}
+#logFileName <- 'log_file.txt'
+#log_open(logFileName, logdir=FALSE, compact=TRUE)
+#log_print(paste0("Local search? ", params$LOCALSEARCH))
+
+#log_print(paste0("IniRows size (in bytes): ", lobstr::obj_size(IniRows)))
+# rover_Perseverance will update the Grid in the Global env
+#plan(multisession, workers=params$NCORES)
+
+#log_print("Calling garbage collector before Stage2_rover_Perseverance")
+expResult <- Stage2_rover_Perseverance(iniVal=PARAMS_CFG$iniVal, WTLags = 1, localSearch = FALSE) # updates the Grid by in place
+
+```
+

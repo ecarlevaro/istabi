@@ -26,6 +26,10 @@ Stage2_rover_Perseverance <- function(iniVal, WTLags, localSearch = FALSE ) {
   # WTLags = -1
   # localSearch = FALSE
   #browser()
+  ts <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
+  logFileName <- sprintf("iStabi_%s.log", ts)
+  log_open(logFileName, logdir=FALSE, compact=TRUE)
+  log_print(paste0("Local search? ", params$LOCALSEARCH))
 
   if (WTLags == -1) {
     thisVffLags <- NULL
@@ -156,6 +160,7 @@ Stage2_rover_Perseverance <- function(iniVal, WTLags, localSearch = FALSE ) {
     # 2 : 3800968 : 2*3800967
     ###################################################################
     ############################# FOR LOOP ##########################
+    future::plan(multisession, workers=NCORES)
     for (i in 1:NROW(pos)) {
       # i = 1
       sptS = pos[i, 'start']

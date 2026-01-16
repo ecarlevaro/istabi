@@ -6,7 +6,7 @@
 \description{
 This function verifies the global objects produced by 'generate_global()'}}
 \usage{
-verify_global(PARAMS_CFG, Y, Z)
+verify_global(PARAMS_CFG, Y, ...)
 }
 \arguments{
 \item{PARAMS_CFG, }{parameters}
