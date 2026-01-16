@@ -271,7 +271,10 @@ Stage2_rover_Perseverance <- function(iniVal, WTLags, localSearch = FALSE ) {
 
 
   }   # close repeat
-
+  
+  # Compute the genS-qLL
+  Grid[, genS_qLL := (qLLStab + (10/11)*S)]
+  
   log_print('Perseverance has landed.')
 
   c('Perseverance has landed.')

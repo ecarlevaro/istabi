@@ -61,3 +61,19 @@ NOTE: Elapsed Time: 0.0808031558990479 secs
 Perseverance has landed.
 NOTE: Log Print Time:  2026-01-16 14:13:28.485711
 NOTE: Elapsed Time: 0.00237202644348145 secs
+Warning: replacing previous import ‘purrr::transpose’ by
+‘data.table::transpose’ when loading ‘iStabi’
+NOTE: Log Print Time:  2026-01-16 16:39:31.075565
+NOTE: Elapsed Time: 2.43405273722278 hours
+Warning: replacing previous import ‘data.table::first’ by ‘dplyr::first’ when
+loading ‘iStabi’
+NOTE: Log Print Time:  2026-01-16 16:39:31.234049
+NOTE: Elapsed Time: 0.158483982086182 secs
+Warning: replacing previous import ‘data.table::last’ by ‘dplyr::last’ when
+loading ‘iStabi’
+NOTE: Log Print Time:  2026-01-16 16:39:31.236459
+NOTE: Elapsed Time: 0.00240993499755859 secs
+Warning: replacing previous import ‘data.table::between’ by ‘dplyr::between’
+when loading ‘iStabi’
+NOTE: Log Print Time:  2026-01-16 16:39:31.238658
+NOTE: Elapsed Time: 0.00219893455505371 secs
