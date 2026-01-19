@@ -1,0 +1,107 @@
+=========================================================================
+Log Path: iStabi_2026-01-19_10-51-59.log
+Program Path: C:/Program Files/Quarto/share/rmd/rmd.R
+Working Directory: C:/Users/Emi/OneDrive/UofA Research/iStabi/istabi/vignettes
+User Name: Emi
+R Version: 4.4.1 (2024-06-14 ucrt)
+Machine: DAUD8370BRF x86-64
+Operating System: Windows 10 x64 build 22621
+Base Packages: stats graphics grDevices utils datasets methods base
+Other Packages: iStabi_0.1.0 plotly_4.10.4 lubridate_1.9.3 forcats_1.0.0
+stringr_1.5.1 dplyr_1.1.4 purrr_1.0.2 readr_2.1.5 tidyr_1.3.1 tibble_3.2.1
+ggplot2_3.5.1 tidyverse_2.0.0 vars_1.6-1 lmtest_0.9-40 urca_1.3-4
+strucchange_1.5-4 sandwich_3.1-1 zoo_1.8-12 MASS_7.3-61
+Log Start Time: 2026-01-19 10:51:59.806897
+=========================================================================
+Local search? true
+NOTE: Log Print Time:  2026-01-19 10:51:59.80981
+NOTE: Elapsed Time: 0.00129389762878418 secs
+10:51. Do a GLOBAL search. nextRows contains all row numbers in the Grid.
+NOTE: Log Print Time:  2026-01-19 10:51:59.811493
+NOTE: Elapsed Time: 0.00168299674987793 secs
+Calling garbage collector before repeat to start exploration
+NOTE: Log Print Time:  2026-01-19 10:51:59.812687
+NOTE: Elapsed Time: 0.00119400024414062 secs
+          used (Mb) gc trigger  (Mb) max used  (Mb)
+Ncells 1275277 68.2    2345585 125.3  2345585 125.3
+Vcells 6337090 48.4   26835327 204.8 32762778 250.0
+NOTE: Log Print Time:  2026-01-19 10:51:59.936965
+NOTE: Elapsed Time: 0.12427806854248 secs
+10:51(top of repeat loop). Starting an exploration
+NOTE: Log Print Time:  2026-01-19 10:51:59.938726
+NOTE: Elapsed Time: 0.00176095962524414 secs
+10:52hs. (inside for loop). Exploring 1598 points. The first point is [-1, -1].
+The last point is [0.95, 0.9].
+NOTE: Log Print Time:  2026-01-19 10:52:00.897108
+NOTE: Elapsed Time: 0.958382129669189 secs
+10:54hs. (inside for loop). Finished computing test values for this batch. Now
+about to update the Grid
+NOTE: Log Print Time:  2026-01-19 10:54:15.51278
+NOTE: Elapsed Time: 2.24359453121821 mins
+10:54hs. (inside for loop). Saving explored rows to file.
+NOTE: Log Print Time:  2026-01-19 10:54:15.515874
+NOTE: Elapsed Time: 0.00309395790100098 secs
+Calling garbage collector after finishing this batch in the for loop
+NOTE: Log Print Time:  2026-01-19 10:54:15.523614
+NOTE: Elapsed Time: 0.00774002075195312 secs
+          used (Mb) gc trigger  (Mb) max used  (Mb)
+Ncells 1362372 72.8    2345585 125.3  2345585 125.3
+Vcells 6540597 50.0   26835327 204.8 32762778 250.0
+NOTE: Log Print Time:  2026-01-19 10:54:15.618463
+NOTE: Elapsed Time: 0.0948491096496582 secs
+# A tibble: 2 × 4
+  time                length_minutes npoints points_per_minute
+  <dttm>                       <dbl>   <dbl>             <dbl>
+1 2026-01-19 10:51:59          NA         NA               NA 
+2 2026-01-19 10:54:15           2.26    1598              707.
+NOTE: Data frame has 2 rows and 4 columns.
+NOTE: Log Print Time:  2026-01-19 10:54:15.701041
+NOTE: Elapsed Time: 0.0825779438018799 secs
+Perseverance has landed.
+NOTE: Log Print Time:  2026-01-19 10:54:15.703101
+NOTE: Elapsed Time: 0.0020599365234375 secs
+Error in eval(parse_only(code), envir = envir) : Calls: .main ...
+.handleSimpleError -> h -> <Anonymous> -> cnd_signal -> signal_abort
+Traceback:
+22: stop(fallback)
+21: signal_abort(cnd)
+20: cnd_signal(entraced)
+19: rlang::entrace(e)
+18: h(simpleError(msg, call))
+17: .handleSimpleError(function (e) 
+    if (xfun::pkg_available("rlang", "1.0.0")) rlang::entrace(e), 
+        "object 'NFIXPARAMS' not found", base::quote(eval(parse_only(code), 
+            envir = envir)))
+16: eval(parse_only(code), envir = envir)
+15: eval(parse_only(code), envir = envir)
+14: withVisible(eval(parse_only(code), envir = envir))
+13: hook_eval(code[i], envir)
+12: inline_exec(block)
+11: in_dir(input_dir(), expr)
+10: in_input_dir(inline_exec(block))
+9: call_inline(x)
+8: process_group(group)
+7: withCallingHandlers(if (tangle) process_tangle(group) else process_group(group), 
+       error = function(e) if (xfun::pkg_available("rlang", "1.0.0")) rlang::entrace(e))
+6: xfun:::handle_error(withCallingHandlers(if (tangle) process_tangle(group) else process_group(group), 
+       error = function(e) if (xfun::pkg_available("rlang", "1.0.0")) rlang::entrace(e)), 
+       function(loc) {
+           setwd(wd)
+           write_utf8(res, output %n% stdout())
+           paste0("\nQuitting from lines ", loc)
+       }, if (labels[i] != "") sprintf(" [%s]", labels[i]), get_loc)
+5: process_file(text, output)
+4: knitr::knit(knit_input, knit_output, envir = envir, quiet = quiet)
+3: rmarkdown::render(input = input, output_format = output_format, 
+       knit_root_dir = knit_root_dir, params = params, run_pandoc = FALSE, 
+       envir = env)
+2: execute(params$input, params$format, params$tempDir, params$libDir, 
+       params$dependencies, params$cwd, params$params, params$resourceDir, 
+       params$handledLanguages, params$markdown)
+1: .main()
+NOTE: Log Print Time:  2026-01-19 10:54:15.842403
+NOTE: Elapsed Time: 0.139302015304565 secs
+=========================================================================
+Log End Time: 2026-01-19 10:54:15.845461
+Log Elapsed Time: 0 00:02:16
+=========================================================================

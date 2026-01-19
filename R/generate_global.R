@@ -15,6 +15,8 @@
 generate_global<- function(PARAMS_CFG, SPVALUE, ...){
 
   NPARAMS <<- NROW(filter(PARAMS_CFG, N_TICKS>0))
+  NSIPARAMS <<- 0 # will be updated if X exists
+  NFIXPARAMS <<- NROW(filter(PARAMS_CFG, N_TICKS==0)) # fix parameters
   KZ <<- NEQS
   if (exists('Z', mode='numeric')) {
     KZ <<- NCOL(Z)
@@ -29,7 +31,6 @@ generate_global<- function(PARAMS_CFG, SPVALUE, ...){
     KX <<- NCOL(X)
     KZMKX <<- KZ - KX
     SdF <<- (NCOL(Z)-NCOL(X))
-    NFIXPARAMS <- NROW(filter(PARAMS_CFG, N_TICKS==0)) # fix parameters
     NSIPARAMS <- NCOL(X) # constants
   } else {
     Mx <<- Times

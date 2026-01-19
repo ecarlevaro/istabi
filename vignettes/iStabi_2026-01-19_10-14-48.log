@@ -1,0 +1,63 @@
+=========================================================================
+Log Path: iStabi_2026-01-19_10-14-48.log
+Program Path: C:/Users/Emi/OneDrive/UofA
+Research/iStabi/istabi/vignettes/Unidentified model.qmd
+Working Directory: C:/Users/Emi/OneDrive/UofA Research/iStabi/istabi/vignettes
+User Name: Emi
+R Version: 4.4.1 (2024-06-14 ucrt)
+Machine: DAUD8370BRF x86-64
+Operating System: Windows 10 x64 build 22621
+Base Packages: stats graphics grDevices utils datasets methods base
+Other Packages: iStabi_0.1.0 lubridate_1.9.3 forcats_1.0.0 stringr_1.5.1
+dplyr_1.1.4 purrr_1.0.2 readr_2.1.5 tidyr_1.3.1 tibble_3.2.1 ggplot2_3.5.1
+tidyverse_2.0.0 vars_1.6-1 lmtest_0.9-40 urca_1.3-4 strucchange_1.5-4
+sandwich_3.1-1 zoo_1.8-12 MASS_7.3-61
+Log Start Time: 2026-01-19 10:14:48.523893
+=========================================================================
+Local search? true
+NOTE: Log Print Time:  2026-01-19 10:14:48.52687
+NOTE: Elapsed Time: 0.00179600715637207 secs
+10:14. Do a GLOBAL search. nextRows contains all row numbers in the Grid.
+NOTE: Log Print Time:  2026-01-19 10:14:48.528817
+NOTE: Elapsed Time: 0.00194692611694336 secs
+Calling garbage collector before repeat to start exploration
+NOTE: Log Print Time:  2026-01-19 10:14:48.53047
+NOTE: Elapsed Time: 0.00165295600891113 secs
+          used (Mb) gc trigger  (Mb) max used  (Mb)
+Ncells 1567553 83.8    2462481 131.6  2462481 131.6
+Vcells 7430683 56.7   26217653 200.1 31830478 242.9
+NOTE: Log Print Time:  2026-01-19 10:14:48.704327
+NOTE: Elapsed Time: 0.17385721206665 secs
+10:14(top of repeat loop). Starting an exploration
+NOTE: Log Print Time:  2026-01-19 10:14:48.708353
+NOTE: Elapsed Time: 0.00402593612670898 secs
+10:14hs. (inside for loop). Exploring 1598 points. The first point is [-1, -1].
+The last point is [0.95, 0.9].
+NOTE: Log Print Time:  2026-01-19 10:14:49.739479
+NOTE: Elapsed Time: 1.03112602233887 secs
+10:17hs. (inside for loop). Finished computing test values for this batch. Now
+about to update the Grid
+NOTE: Log Print Time:  2026-01-19 10:17:05.176282
+NOTE: Elapsed Time: 2.25728004773458 mins
+10:17hs. (inside for loop). Saving explored rows to file.
+NOTE: Log Print Time:  2026-01-19 10:17:05.179766
+NOTE: Elapsed Time: 0.00348401069641113 secs
+Calling garbage collector after finishing this batch in the for loop
+NOTE: Log Print Time:  2026-01-19 10:17:05.197352
+NOTE: Elapsed Time: 0.0175859928131104 secs
+          used  (Mb) gc trigger  (Mb) max used  (Mb)
+Ncells 2231552 119.2    4562378 243.7  4562378 243.7
+Vcells 8877245  67.8   26217653 200.1 31830478 242.9
+NOTE: Log Print Time:  2026-01-19 10:17:05.330158
+NOTE: Elapsed Time: 0.132806062698364 secs
+# A tibble: 2 × 4
+  time                length_minutes npoints points_per_minute
+  <dttm>                       <dbl>   <dbl>             <dbl>
+1 2026-01-19 10:14:48          NA         NA               NA 
+2 2026-01-19 10:17:05           2.28    1598              702.
+NOTE: Data frame has 2 rows and 4 columns.
+NOTE: Log Print Time:  2026-01-19 10:17:05.539204
+NOTE: Elapsed Time: 0.209045886993408 secs
+Perseverance has landed.
+NOTE: Log Print Time:  2026-01-19 10:17:05.541498
+NOTE: Elapsed Time: 0.00229406356811523 secs

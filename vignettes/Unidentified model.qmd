@@ -14,7 +14,7 @@ format:
     toc: true
 params:
   IDSAMPLE: ""
-  NCORES: 4
+  NCORES: 6
   LOCALSEARCH: 'true'
 ---
 
@@ -38,8 +38,14 @@ devtools::install()
 ```
 
 ```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| include: true
+#| echo: true
 library(vars)
 library(tidyverse)
+library(plotly)
 library(iStabi)
 ```
 
@@ -49,7 +55,7 @@ sam <- iStabi::data_sim_biVAR
 ```
 
 
-## THE MODEL
+## 0. THE MODEL
 
 True parameters are
 
@@ -66,12 +72,13 @@ $$
 
 with $\beta = 0.15$ and $\alpha = -0.75$.
 
-## ESTIMATION VAR
+## 1. ESTIMATION VAR
 
 ```{r}
 varModel <- VAR(cbind('i' = sam$y1, 's' = sam$y2), p = 1, type = "const")
 Res = residuals(varModel)
-
+Res <- readRDS('C:/Users/Emi/OneDrive/UWA PhD/MonPolicy StockMkt/Results/AfterZLB/1520mar.E/samRes-1520mar.E.rds')
+Res <- cbind('i' = Res$i, 's' = Res$s)
 ```
 
 ```{r}
@@ -116,7 +123,7 @@ GET_B <- function(theta0) {
 
 ```
 
-## SEARCH
+## 2. SEARCH
 
 ### Search settings
 
@@ -141,7 +148,7 @@ PARAMS_CFG <- tribble(~name,   ~iniVal, ~stepSize, ~minVal, ~maxVal,
 NEQS = 1
 MODELEQS <- list(list('Y' = Y,  'get_b'=NULL))
                  #'X'=X, 'Z'=Z))
-NCORES = 4
+NCORES = params$NCORES
 # Level of condfidence of the S set. The closer to 1, the more robust the search is to local minima but it takes longer.
 SPVALUE = 0.95
 # R is NEQS*ncol(Z) where ncol(Z) is the number of instruments
@@ -184,7 +191,12 @@ Grid <- build_grid(PARAMS_CFG, gridLines)
 Test
 ```{r}
 theta0 = c('alpha' = -0.75, 'beta' = 0.15) # the true theta with the estimated (nuisance) parameter 0.378
-comp_tests(theta0, VffLags = 1)
+theta0 = c('alpha' = -20, 'beta' = -0.03)
+theta0 = c('alpha' = -20, 'beta' = 0)
+comp_tests(theta0, typeVarF='NeweyWest', VffLags = 1)
+comp_tests(theta0, typeVarF='NeweyWest', VffLags = NULL) ####
+comp_tests(theta0, typeVarF='const', VffLags = NULL)
+comp_tests(theta0, typeVarF='HAC', VffLags = NULL)
 ```
 
 ### Start search
@@ -200,7 +212,9 @@ comp_tests(theta0, VffLags = 1)
 
 #log_print("Calling garbage collector before Stage2_rover_Perseverance")
 expResult <- Stage2_rover_Perseverance(iniVal=PARAMS_CFG$iniVal, WTLags = 1, localSearch = FALSE) # updates the Grid by in place
-
+#Grid <- readRDS( 'Grid_Unidentified_model.rds')
+#  saveRDS(Grid, 'Grid_Unidentified_model.rds')
+#NFIXPARAMS=1
 ```
 
 ```{r}
@@ -213,10 +227,7 @@ Grid[order(qLLStab)][1:10]
 
 
 
-## PLOTTING
-
-
-
+## 3. BUILD SETS
 
 
 ### Critical values
@@ -231,21 +242,17 @@ The number of *fixed* identified parameters is **`r NFIXPARAMS`**.
 
 The number of *estimated* parameters under the null is **`r NSIPARAMS`**.
 
-```{r}
-
-```
-
 
 ```{r CVs}
-get_CVs <- function(pconf_min, pconf_max) {
-  daiStabi::data_CVs
+NSIPARAMS = 0 # not needed in the new version of the package
+PCONFS = c(0.85, 0.90)
+get_CVs <- function() {
+  
   CVs <- list('qLLStab'=NA, 'S'=NA, 'genS_qLL'=NA)
 
-  PCONFS = c(pconf_min, pconf_max)
-  
-  CVs$qLLStab <- filter(iStabi::data_CVs$qLLStab, DG_F == KZ)
-  CVs$genS_qLL <- filter(data_CVs$genS_qLL, 
-                         MOMENT_CONDITIONS == KZ & STRONGLY_IDENTIFIED_PARAMETERS == NSIPARAMS)
+  CVs$qLLStab <- filter(iStabi::data_CVs$qLLStab, DG_F == KZ & P_CONF %in% PCONFS)
+  CVs$genS_qLL <- filter(iStabi::data_CVs$genS_qLL, 
+                         MOMENT_CONDITIONS == KZ & STRONGLY_IDENTIFIED_PARAMETERS == NSIPARAMS & P_CONF %in% PCONFS)
   CVs$S <- tibble('P_CONF' = PCONFS,
                  'CUTOFF_TOP' = map_dbl(PCONFS, ~qchisq(.x, KZMKX)))
   
@@ -284,27 +291,36 @@ CVs$genS_qLL
 ### Data for plotting
 
 ```{r}
-Sdf =  2
-Grid[!is.na(qLLStab), 'qLLStab_sigAt' := CVs$sig[ findInterval(qLLStab, CV$value,left.open=TRUE) ],]
-pExplored <- filter(Grid, !if_all(.fns=is.na)) %>%
-  # findInterval: the second vector gives the FLOOR value for each interval
-  mutate(., 
-         'qLLStab_sigAt' = CV$sig[ findInterval(qLLStab, CV$value,left.open=TRUE) ],
-         'S_pval' = round(1-pchisq(S, df=Sdf), digits=2),
-         'pointSize' = 0, 
-         'inQllSet' = if_else(qLLStab_sigAt>=0.10, 1, 0))
-# This should be TRUE (the qll value is for 3 instruments)
-NROW(filter(pExplored, qLLStab<=23.51)) == NROW(filter(pExplored, qLLStab_sigAt>=0.01))
-
-saveRDS(pExplored, 'pExplored.rds')
-
+build_set <- function(setName) {
+  # setName = 'qLLStab'
+  thisCV <- CVs[[setName]]
+  statMax = filter(thisCV, P_CONF == PCONFS[2])$CUTOFF_TOP
+  thisPconf = thisCV$P_CONF
+  thisCV = thisCV$CUTOFF_TOP
+  # 546 rows
+  
+  theseCols <- c(PARAMS_CFG$name, setName)
+  aSet = Grid[get(setName) <= statMax, ..theseCols][, 
+                                                    sigAt := thisPconf[ 1+findInterval(get(setName), thisCV,left.open=TRUE)]]
+  aSet
+  
+}
 ```
+
+```{r}
+Sets <- list('qLLStab' = build_set('qLLStab'),
+             'S' = build_set('S'),
+             'genS_qLL' = build_set('genS_qLL'))
+```
+
+
+## 4. PLOTTING
 
 ### Grid for plotting
 Force the starting values to be a multiple of the step size. This avoids problems and is clear what the true parameter space is.
 
 ### Plots
-True parameter vector $ \color{blue}{\theta} = `r thetaStar` $
+True parameter vector $ \color{blue}{\theta} =(\alpha = -0.75, \beta = 0.15)$
 
 #### Global search
 Scatterplot for all searched values (useful for the global search)
@@ -313,20 +329,20 @@ Scatterplot for all searched values (useful for the global search)
 ```{r}
 # INTERACTIVE PLOTs ----
 #### S-plot ----
-pSbase <- plot_ly(data = filter(pExplored, S<4.60517), 
-                 x=~gammaF, 
-                 y=~lambda,
-                 color=) %>%
-  layout(title = 'S-set for the New Keyneasian Phillips Curve (90% confidence)',
-         xaxis = list(title=plotly::TeX('\\gamma_F'), 
-                        tickvals=seq(from=0, to=1, by=0.10),
-                        range = c(0, 1),
+pSbase <- plot_ly(data = Sets$S[sigAt<=0.90,], 
+                 x=~alpha, 
+                 y=~beta,
+                 color='grey') %>%
+  layout(title = 'S-set (90% confidence)',
+         xaxis = list(title=plotly::TeX('\\alpha'), 
+                        tickvals=seq(from=-1, to=1, by=0.20),
+                        range = c(-1, 1),
                         fixedrange = TRUE),
-           yaxis = list(title=plotly::TeX('\\lambda'),  
-                        tickvals=seq(from=0.001, to=0.2, by=0.05),
-                        range = c(0.001, 0.2),
+           yaxis = list(title=plotly::TeX('\\beta'),  
+                        tickvals=seq(from=-1, to=1, by=0.20),
+                        range = c(-1, 1),
                         fixedrange = TRUE)) %>%
-  add_trace(x = 0.591,y = 0.015,
+  add_trace(x = -0.75,y = 0.15,
     type = "scatter",   mode = "markers",
     marker = list(symbol = "square",  size = 12,  color = "red" ),
     inherit = FALSE,
@@ -342,59 +358,40 @@ pSbase %>%
 ```{r}
 # INTERACTIVE PLOTs ----
 #### S-plot ----
-pSbase <- plot_ly(data = filter(pExplored, qLLStab <= 18.14), 
-                 x=~gammaF, 
-                 y=~lambda,
-                 color=) %>%
-  layout(title = 'S-set for the New Keyneasian Phillips Curve (90% confidence)',
-         xaxis = list(title=plotly::TeX('\\gamma_F'), 
-                        tickvals=seq(from=0, to=1, by=0.10),
-                        range = c(0, 1),
+pSbase <- plot_ly(data = Sets$qLLStab[sigAt<=0.90,], 
+                 x=~alpha, 
+                 y=~beta,
+                 color='grey')%>%
+  layout(title = 'qLLStab-set (90% confidence)',
+         xaxis = list(title=plotly::TeX('\\alpha'), 
+                        tickvals=seq(from=-1, to=1, by=0.20),
+                        range = c(-1, 1),
                         fixedrange = TRUE),
-           yaxis = list(title=plotly::TeX('\\lambda'),  
-                        tickvals=seq(from=0.001, to=0.2, by=0.05),
-                        range = c(0.001, 0.2),
+           yaxis = list(title=plotly::TeX('\\beta'),  
+                        tickvals=seq(from=-1, to=1, by=0.20),
+                        range = c(-1, 1),
                         fixedrange = TRUE)) %>%
+  add_trace(x = -0.75,y = 0.15,
+    type = "scatter",   mode = "markers",
+    marker = list(symbol = "square",  size = 12,  color = "red" ),
+    inherit = FALSE,
+    showlegend = FALSE) %>%
   config(mathjax = "cdn")
 
 pSbase %>%
-  add_trace(type='scatter', mode='markers')
+  add_trace(type='scatter', mode='markers', marker = list(color='blue'))
 
 ```
 
-```{r}
-#### qLLStab plot ----
-pQllExplored <- filter(pExplored, qLLStab_sigAt >= 0.1) %>%
-  # Finding edges of the plot
-  group_by(., gammaF) %>% 
-  mutate('edge_min' = if_else(lambda == min(lambda), TRUE, FALSE),
-         'edge_max' = if_else(lambda == max(lambda), TRUE, FALSE)) %>%
-  ungroup()
-
-pQllbase <- plot_ly(data = pQllExplored, 
-                  x=~gammaF, y=~lambda, color=~qLLStab) %>%
-  layout(title = 'qLL-S set for New Keyneasian Phillips Curve (90% confidence)',
-         scene=list(
-           xaxis = list(title=plotly::TeX('\\gamma_f'), 
-                        tickvals=seq(from=PARAMS_CFG$minVal[1], to=PARAMS_CFG$maxVal[1],
-                                     by=PARAMS_CFG$stepSize[1])),
-           yaxis = list(title=plotly::TeX('\\lambda'),  
-                        tickvals=seq(from=PARAMS_CFG$minVal[2],           to=PARAMS_CFG$maxVal[2], 
-                                     by=PARAMS_CFG$stepSize[2])))) %>%
-  config(mathjax = "cdn")
-
-pQllbase %>%
-  add_trace(type='scatter', mode='markers')
-
-```
 
 ```{r}
 
-pBase <- ggplot(data=pQllExplored, mapping=aes(x=gammaF, y=lambda)) +
-  scale_x_continuous(name=TeX(r"(Respose to expected inflation ($\gamma_f$))"), limits=c(-0.1, 1.1), 
-                     breaks=seq(from=-0.1, to=1.1, by=PARAMS_CFG$stepSize[1]), expand = expand_scale(mult=0.01)) +
-  scale_y_continuous(name=TeX(r'(Respose to interest rate ($\lambda$))'), limits=c(-0.3, 0.3), 
-                     breaks=seq(from=-0.3, to=0.3, by=4*(PARAMS_CFG$stepSize[2])), expand = expand_scale(mult=0.01)) + 
+pBase <- ggplot(data=Sets$qLLStab[sigAt<=0.90,], 
+                mapping=aes(x=alpha, y=beta)) +
+  scale_x_continuous(name=TeX(r"(\\alpha)"), limits=c(-1, 1), 
+                     breaks=seq(from=-1, to=1, by=0.1)) +
+  scale_y_continuous(name=TeX(r'($\\beta$)'), limits=c(-1, 1), 
+                     breaks=seq(from=-1, to=1, by=0.1)) + 
   theme_bw() + theme(panel.grid=element_line(colour='#999999', linetype='14'), 
                      panel.grid.minor=element_line(colour='white'), 
                      text=element_text(size=10), 
@@ -405,20 +402,10 @@ pBase <- ggplot(data=pQllExplored, mapping=aes(x=gammaF, y=lambda)) +
   geom_vline(xintercept=0, colour = 'black', linetype = 'solid') +
   geom_hline(yintercept=0, colour = 'black', linetype = 'solid') +   
   # Highlightinh the TRUE value
-  geom_point(aes(x=thetaStar['gammaF'], y=thetaStar['lambda']), size=3, colour='black', fill='yellow')
+  geom_point(aes(x=-0.75, y=0.15), size=3, colour='black', fill='yellow')
 
 # Scatterplot
-pBase + geom_point(aes(colour=qLLStab))
-# Curvy set
-pBase +
-  coord_cartesian(xlim=c(-0.1, 1.1), ylim=c(-0.3, 0.3), expand=TRUE) + 
-  geom_raster(fill='grey', colour='black',
-            interpolate=TRUE, show.legend=TRUE, alpha=0.8) + 
-  # Lower edge
-  geom_path(data=filter(pQllExplored, edge_min == TRUE))  +
-  # Upper edge
-  geom_path(data=filter(pQllExplored, edge_max == TRUE))
-# RA
-
-
+pGplot <- pBase + geom_point(aes(colour=qLLStab))
+ggsave('Unidentified_model_qLLStab_set.png', plot=pGplot, width=6, height=5)
+pGplot
 ```
