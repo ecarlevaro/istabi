@@ -1,25 +1,32 @@
 #' Stage2_rover_Perseverance
 #'
-#'  \description{This function fills in the test statistics in the grid produced by 'build_grid().
-#'* All these variables should be defined beforehand
-#'* Y, Z, Ztrans: matrices with data
-#'* T: integer, the number of observations
-#'* get_b: a function which accepts the vector theta0 and outputs the value of the vector b(theta0) such that Y%\*%b is the moment equation.
-#'* Requires access to global objects: STCPARAMNAMES, ESTVALUESNAMES, SCRITICAL, NPARAMS, GET_B, nextThetas}
+#' Fill in the test statistics in the grid produced by `build_grid()`.
 #'
-#'  \usage{Stage2_rover_Perseverance(iniVal, WTLags, localSearch = FALSE  )}
+#' @details
+#' The following objects should be defined beforehand:
+#' * `Y`, `Z`, `Ztrans`: matrices with data
+#' * `T`: integer, number of observations
+#' * `get_b`: a function that accepts `theta0` and returns `b(theta0)` such that
+#'   `Y %*% b` is the moment equation
 #'
-#' @param iniVal, an initial value to start grid search over
-#' @param WTLags, the amount of lags
-#'@param localSearch, TRUE or FALSE depending if you want a global or local search respectively
+#' Requires access to global objects: `STCPARAMNAMES`, `ESTVALUESNAMES`,
+#' `SCRITICAL`, `NPARAMS`, `GET_B`, `nextThetas`.
 #'
-#'@returns the parameter value not rejected by null over the created grid
+#' @param iniVal Initial value to start grid search over.
+#' @param WTLags Number of lags for the Newey-West estimator. If `-1`, uses
+#'   automatic lag selection proposed by Newey-West.
+#' @param localSearch Logical; `TRUE` for local search, `FALSE` for global search.
+#' @param typeVarF Character string. Variance estimator passed to the sandwich package.
+#'   Options include `"HAC"`, `"HC3"`, `"const"`, `"NeweyWest"`.
+#'
+#' @return Parameter value(s) not rejected by the null over the created grid.
 #' @export
 #'
 #' @examples
+#' # Example (replace with real inputs)
+#' # Stage2_rover_Perseverance(iniVal = ..., WTLags = 4, localSearch = FALSE)
 
-
-Stage2_rover_Perseverance <- function(iniVal, WTLags, localSearch = FALSE ) {
+Stage2_rover_Perseverance <- function(iniVal, typeVarF='NeweyWest', WTLags=-1, HACprewhite=FALSE, localSearch = FALSE ) {
   # DEBUG
   # iniVal <- PARAMS_CFG$INIVAL_STAGE2
   # iniVal <- IniRows
@@ -29,7 +36,7 @@ Stage2_rover_Perseverance <- function(iniVal, WTLags, localSearch = FALSE ) {
   ts <- format(Sys.time(), "%Y-%m-%d_%H-%M-%S")
   logFileName <- sprintf("iStabi_%s.log", ts)
   log_open(logFileName, logdir=FALSE, compact=TRUE)
-  log_print(paste0("Local search? ", params$LOCALSEARCH))
+  log_print(paste0("Local search? ", localSearch))
 
   if (WTLags == -1) {
     thisVffLags <- NULL
@@ -177,7 +184,9 @@ Stage2_rover_Perseverance <- function(iniVal, WTLags, localSearch = FALSE ) {
 
       testValues <- as.data.frame(t(future_apply(Grid[nextRows[sptS:sptE], 1:NPARAMS], 1,
                                                  comp_tests,
+                                                 typeVarF = typeVarF,
                                                  VffLags = thisVffLags,
+                                                 HACprewhite = HACprewhite,
                                                  future.seed = 7561234)))
 
 

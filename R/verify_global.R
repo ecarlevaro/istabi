@@ -12,8 +12,6 @@
 #' @examples
 verify_global <- function(PARAMS_CFG, Y, ...) 
 {
-  T <- NROW(Y)
-  NPARAMS = NROW(filter(PARAMS_CFG, N_TICKS > 0))
   if (!exists("NEQS", mode = "numeric")) {
     stop("How many equations?")
   }
@@ -24,7 +22,7 @@ verify_global <- function(PARAMS_CFG, Y, ...)
     if (!(NROW(Z) == NROW(Y))) {
       stop("The number of rows of X, Y and Z must coincide")
     }
-    if (!(NROW(Z) == NEQS * T)) {
+    if (!(NROW(Z) == NEQS * BIGT)) {
       stop("The number of rows of Z does not coincide with the number of moment equations and observations.")
     }
     KZ = NCOL(Z)
@@ -54,7 +52,7 @@ verify_global <- function(PARAMS_CFG, Y, ...)
       if (!(NROW(thisEq$Z) == NROW(thisEq$Y))) {
         stop("The number of rows of X, Y and Z must coincide")
       }
-      if (!(NROW(thisEq$Z) == T)) {
+      if (!(NROW(thisEq$Z) == BIGT)) {
         stop("The number of rows of Z does not coincide with the number of moment equations and observations.")
       }
     }

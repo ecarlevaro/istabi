@@ -4,14 +4,16 @@
 #'
 #'  \usage{function(theta0, VffLags=NULL) is used to get the test statistics}
 #' @param theta0, the parameters of interest
-#' @param z, a vector of size T with the values of the instruments (Z) for each observation. It is used to compute the moment equations.
-#' @param VffLags, amount of lags
+#' @param typeVarF, Estimator of the variance-covariance matrix of the moment functions(s). Passed to sandwich package. Options are 'HAC' (Heteroskedasticity and Autocorrelation Consistent), 'HC3' (Heteroskedasticity Consistent type 3), 'const' (constant variance), and 'NeweyWest' (Newey-West estimator). 'NeweyWest' variance is the default option.
+#' @param VffLags, Number of lags for the variance-covarinace estimator. If NULL in the case of the Newey-West estimator then the number of lags is automatically selected. NULL is the default.
+#' @param kx, number of nuisance parameters. 
+#' @param z, a vector of size T with the values of the instruments (Z) for each observation. This is internally used in case the moment condition vary by a given exogenous regressor. It is passed to GET_MOM_VALUES().
 #'
 #' @returns the parameter test statistics
 #' @export
 #'
 #' @examples
-comp_tests <- function(theta0, typeVarF='const', VffLags=NULL, HACprewhite=FALSE, zVffLags=NULL) { tryCatch({
+comp_tests <- function(theta0, typeVarF='NeweyWest', VffLags=NULL, HACprewhite=FALSE, kx=KX, z=NULL) { tryCatch({
   
   c2_hat= NA
   
